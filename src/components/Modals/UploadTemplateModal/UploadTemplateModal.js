@@ -60,12 +60,11 @@ class ModalBtn extends Component {
           color="secondary"
           style={{
             position: "fixed",
-            bottom: 50,
+            top: 20,
             right: 50,
             borderRadius: 12,
-            fontSize: 20,
+            fontSize: 16,
             outline: "none",
-            fontWeight: "bold",
             fontFamily: "Montserrat",
             textTransform: "none",
           }}

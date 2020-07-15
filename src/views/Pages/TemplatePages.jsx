@@ -29,7 +29,7 @@ class TemplatePages extends Component {
   }
 
   componentDidMount() {
-    const { GetTemplates, GetPages, userId, pages } = this.props;
+    const { GetTemplates } = this.props;
     //alert(userId);
     GetTemplates(localStorage.getItem("userId"));
   }

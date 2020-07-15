@@ -80,14 +80,14 @@ export function StatsCard(props) {
         </CardActionArea>
         <CardActions>
           <Button size="small" color="primary" onClick={togglePopupPreview}>
-            View
+          {props.statsBtn1Text}
           </Button>
           <Button
             size="small"
             style={{ backgroundColor: Colors.Green }}
             onClick={togglePopup}
           >
-            Clone
+            {props.statsBtn2Text}
           </Button>
         </CardActions>
       </Card>

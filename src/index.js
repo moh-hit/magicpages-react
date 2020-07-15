@@ -29,11 +29,7 @@ ReactDOM.render(
         <Route path="/index" render={props => <Index {...props} />} />
         <Route path="/login-page" render={props => <LoginPage {...props} />} />
         <Route path="/admin/pageDetails" render={props => <PageDetail {...props} />} />
-
-        <Route
-          path="/signUp-page"
-          render={props => <SignUpPage {...props} />}
-        />
+        <Route path="/signUp-page" render={props => <SignUpPage {...props} />} />
         <Route path="/admin" render={props => <AdminLayout {...props} />} />
         <Route path="/admin/dashboard" render={props => <Dashboard {...props} />}/>
         <Route path="/admin/pageDetails" render={props => <PageDetail {...props} />} />

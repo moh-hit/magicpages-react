@@ -7,14 +7,12 @@ import Footer from "../components/Footers/DarkFooter";
 import Sidebar from "../components/SideBar/Sidebar";
 
 
-import image from "../assets/img/sidebar-5.jpg";
 
 class Admin extends Component {
   constructor(props) {
     super(props);
     this.state = {
       _notificationSystem: null,
-      image: image,
       color: "blue",
       hasImage: true,
       fixedClasses: "dropdown show-dropdown open"
@@ -52,9 +50,7 @@ class Admin extends Component {
     }
     return "Brand";
   };
-  handleImageClick = image => {
-    this.setState({ image: image });
-  };
+
   handleColorClick = color => {
     this.setState({ color: color });
   };

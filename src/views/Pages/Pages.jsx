@@ -5,11 +5,13 @@ import { DataBaseMiddleware } from "../../store/middlewares";
 import { StatsCard } from "../../components/StatsCard/StatsCardPage";
 import { Colors } from "../../config";
 import History from "../../config/history";
-//isomorphic re consielation
+import noPage from '../../assets/img/NoPage.png'
+const axios = require("axios");
 
 class Pages extends Component {
+
   componentDidMount() {
-    const { GetTemplates, GetPages, userId, pages } = this.props;
+    const { GetPages } = this.props;
     GetPages(localStorage.getItem("userId"));
   }
 
@@ -21,12 +23,29 @@ class Pages extends Component {
     console.log("Did update works===>");
   }
 
+  deletePage = (pageId) => {
+    const { GetPages } = this.props;
+    axios
+      .post(`http://magicpages.propstory.com/page/remove`, {
+        page_id: pageId,
+      })
+      .then(
+        window.location.reload()
+      )
+  }
+
+
+
+
   render() {
     const { pages } = this.props;
+
+
     return (
       <div className="content">
         <Grid fluid className="text-center">
           <Row>
+            {pages.length <= 0 ? <img src={noPage} width="60%" style={{display: "block", marginRight: "auto", marginLeft: "auto"}} /> : null}
             {pages && pages.map((item, index) => {
               return (
                 <>
@@ -37,12 +56,13 @@ class Pages extends Component {
                       statsColor={Colors.LightBlue}
                       statsHeading={item.name}
                       frame={item.html}
-                      statsBtn1Text="Select Page"
-                      statsBtn2Text="Edit Page"
-                      onClick={() => {
-                        History.push("./pageDetails/?page_id="+item._id, { item });
+                      statsBtn2Text="Delete Page"
+                      statsBtn1Text="Edit Page"
+                      onClickEdit={() => {
+                        History.push("./pageDetails/?page_id=" + item._id, { item });
                       }}
-                      // className="pe-7s-trash"
+                      onClickDelete={() => this.deletePage(item._id)}
+                    // className="pe-7s-trash"
                     />
                   </Col>
                 </>
@@ -50,6 +70,7 @@ class Pages extends Component {
             })}
           </Row>
         </Grid>
+
       </div>
     );
   }

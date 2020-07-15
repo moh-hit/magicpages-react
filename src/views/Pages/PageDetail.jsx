@@ -1,21 +1,32 @@
 import React, { Component } from "react";
-import { Row, Col } from "react-bootstrap";
 import { connect } from "react-redux";
 import $ from "jquery";
-import Frame from "react-frame";
 import LaptopIcon from "@material-ui/icons/Laptop";
 import PhoneAndroidIcon from "@material-ui/icons/PhoneAndroid";
 import Grid from "@material-ui/core/Grid";
 import ToggleButton from "@material-ui/lab/ToggleButton";
 import ToggleButtonGroup from "@material-ui/lab/ToggleButtonGroup";
 import { DataBaseMiddleware } from "../../store/middlewares/index.js";
-var HtmlToReactParser = require("html-to-react").Parser;
-
-const base_lpa_path = "https://propstory.com/lpa/";
+import Snackbar from '@material-ui/core/Snackbar';
+import MuiAlert from '@material-ui/lab/Alert';
+import LinkIcon from '@material-ui/icons/Link';
+import Tooltip from '@material-ui/core/Tooltip';
+import Popover from '@material-ui/core/Popover';
+import FileCopyIcon from '@material-ui/icons/FileCopy';
+import google from '../../assets/img/google.png'
+import facebook from '../../assets/img/facebook.png'
+import taboola from '../../assets/img/taboola.png';
+import Backdrop from '@material-ui/core/Backdrop';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 const axios = require("axios");
 
-const isMobile = window.innerWidth <= 500;
+
+function Alert(props) {
+  return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
+
+
 class PageDetail extends Component {
   constructor(props) {
     super(props);
@@ -26,7 +37,6 @@ class PageDetail extends Component {
       selectedFile: null,
       code: null,
       encoded: null,
-      pageName: "",
       pageId: null,
       name_input: "",
       file: "",
@@ -46,24 +56,39 @@ class PageDetail extends Component {
       google_conversion_pixel: "",
       facebook_conversion_pixel: "",
       other_conversion_pixel: "",
-      page: "",
+      utmId: "",
+      pageName: "",
+      pageLinks: [],
       // Form Data Ends
-      fetchedData: [],
       clicked: "",
       imgClass: "",
       margTop: 0,
       isSaved: false,
+      anchorEl: null,
+      urlToCopy: "",
+      loadingLink: false
       //   code: this.state.data.html
     };
     this.onClickMobile = this.onClickMobile.bind(this);
     this.onClickDesktop = this.onClickDesktop.bind(this);
     // this.handleFileRead = this.handleFileRead.bind(this);
+    this.handleClose = this.handleClose.bind(this);
     this.onSave = this.onSave.bind(this);
-    this.onDownload = this.onDownload.bind(this);
     this.enableEditableImages = this.enableEditableImages.bind(this);
     this._handleImageChange = this._handleImageChange.bind(this);
     this.fetchPage = this.fetchPage.bind(this);
   }
+
+
+
+
+  handleClick = (event) => {
+    this.setState({ anchorEl: event.currentTarget });
+  };
+
+  handleClosePopover = () => {
+    this.setState({ anchorEl: null });
+  };
 
   enableEditableImages = () => {
     console.log("IN ENABLE EDITABLE");
@@ -72,7 +97,6 @@ class PageDetail extends Component {
     // this.addImageChangeBtn();
     let that = this;
     let iframe = document.getElementById("frame");
-    let innerDoc = iframe.contentDocument || iframe.contentWindow.document;
     //var allImages = window.frames['frame'].contentDocument.getElementByTagName('img')[0];
     //console.log($('#frame').contents().find('img'))
     let allImages = $("#frame").contents().find("img");
@@ -102,7 +126,6 @@ class PageDetail extends Component {
       var source = $(this);
 
       $(img).click(function () {
-        var attri = $(this).attr("src");
         console.log(source);
         that.setState({
           imagePreviewUrl: source.attr("src"),
@@ -151,110 +174,6 @@ class PageDetail extends Component {
     $("." + field_name).val(hidden_field_val);
   };
 
-  create_custom_input_fields = () => {
-    let self = this;
-    let custom_fields = [
-      {
-        name: "google_conversion_pixel",
-        label: " Google Conversion Pixel ID",
-        type: "pixel",
-      },
-      {
-        name: "taboola_conversion_pixel",
-        label: "Taboola Conversion Pixel ID",
-        type: "pixel",
-      },
-      {
-        name: "ivr",
-        label: "IVR Code",
-        type: "calling",
-      },
-      {
-        name: "mobile_calling",
-        label: "Mobile Phone Number",
-        type: "calling",
-      },
-      {
-        name: "desktop_calling",
-        label: "Desktop Phone Number",
-        type: "calling",
-      },
-      {
-        name: "webhook_fb",
-        label: "Webhook For facebook",
-        type: "webhook",
-      },
-      {
-        name: "webhook_taboola",
-        label: "Webhook for taboola",
-        type: "webhook",
-      },
-      {
-        name: "webhook_linkedin",
-        label: "Webhook for linkedin",
-        type: "webhook",
-      },
-      {
-        name: "webhook_times",
-        label: "Webhook for times",
-        type: "webhook",
-      },
-      {
-        name: "webhook_google",
-        label: "Webhook for google",
-        type: "webhook",
-      },
-      {
-        name: "title",
-        label: "Page Title",
-        type: "title",
-      },
-      {
-        name: "description",
-        label: "Page description",
-        type: "meta",
-      },
-      {
-        name: "keywords",
-        label: "Page keywords",
-        type: "meta",
-      },
-      {
-        name: "page_name",
-        label: "Page name",
-        type: "meta",
-      },
-      {
-        name: "location",
-        label: "Location",
-        type: "location",
-      },
-    ];
-
-    custom_fields.forEach(function (custom_field) {
-      let hidden_custom_field = custom_field.name + "_hidden";
-      let custom_field_div = custom_field.name + "_div";
-      // let checking_custom_div = $('.development_div').find(custom_field_div).length;
-      if ($(".development_div").find("." + custom_field_div).length == 0) {
-        let label_html_field =
-          '<div className="form-group ' +
-          custom_field_div +
-          '"><label className="add_section">' +
-          custom_field.label +
-          '</label><input type="text" className="form-control ' +
-          custom_field.name +
-          '" /> <input type="hidden" className="' +
-          hidden_custom_field +
-          '" /></div>';
-        // if($('input').hasClass('form-control phone'))
-        $(".development_div").prepend(label_html_field);
-      }
-      if (custom_field.type == "calling") {
-      }
-      self.show_input_values(hidden_custom_field, custom_field.name);
-    });
-  };
-
   componentWillMount = async () => {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
@@ -262,7 +181,12 @@ class PageDetail extends Component {
     await this.setState({ pageId: page_id });
     this.fetchPage();
     this.fetchUTM();
+
   };
+
+  componentDidMount = () => {
+
+  }
 
   fetchPage() {
     axios
@@ -278,6 +202,7 @@ class PageDetail extends Component {
         this.setState({
           code: decoded,
           pageName: res.data.page.name,
+          pageLinks: res.data.page.links[0]
         });
       });
 
@@ -286,7 +211,7 @@ class PageDetail extends Component {
         "contentEditable",
         "true"
       );
-      this.create_custom_input_fields();
+      // this.create_custom_input_fields();
       console.log("IN HANDLE FILE READ");
       this.enableEditableImages();
       this.setState({
@@ -346,6 +271,15 @@ class PageDetail extends Component {
     });
   }
 
+  handleClose(event, reason) {
+
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    this.setState({ isSaved: false });
+  };
+
   // CHANGE FRAME VIEW FUNCTION
   onClickMobile() {
     this.setState({
@@ -368,38 +302,54 @@ class PageDetail extends Component {
     console.log("myFrame", myFrame);
   };
 
-  // FETCH UTM DATA FUNCTION
+  createLink = () => {
+    var content = document.getElementsByTagName("iframe").frame.contentWindow.document.documentElement.innerHTML;
+    var encoded = btoa(unescape(encodeURIComponent(content)));
 
+    axios
+      .post(`http://magicpages.propstory.com/createLink`, {
+        page_name: this.state.pageName,
+        page_id: this.state.pageId,
+        page_html: encoded,
+        page_link: this.state.pageLinks
+      })
+      .then(
+        this.setState({ loadingLink: true }),
+        setTimeout(() => {
+          window.location.reload()
+        }, 2000)
+
+      )
+    this.setState({ loadingLink: true });
+  }
+
+  // FETCH UTM DATA FUNCTION
   fetchUTM() {
     // Where we're fetching data from
+    console.log(this.state.pageId);
+
     axios
-      .get(`http://magicpages.propstory.com/getutmDetails`, {
+      .post(`http://magicpages.propstory.com/getutmDetails`, {
         page_id: this.state.pageId,
       })
       // We get the API response and receive data in JSON format...
       .then((res) => {
-        console.log("FETCHING DATA");
-        const persons = res.data;
-        console.log(persons);
-        this.setState({
-          fetchedData: persons.utm[0],
-        });
+        console.log("FETCHING UTM DATA");
+        const utmData = res.data.utm;
+
 
         this.setState({
-          meta_keyword: this.state.fetchedData.meta_keyword,
-          meta_description: this.state.fetchedData.meta_description,
-          meta_author: this.state.fetchedData.meta_author,
-          page_title: this.state.fetchedData.page_title,
-          google_pageview_pixel: this.state.fetchedData.google_pageview_pixel,
-          facebook_pageview_pixel: this.state.fetchedData
-            .facebook_pageview_pixel,
-          other_pageview_pixel: this.state.fetchedData.other_pageview_pixel,
-          google_conversion_pixel: this.state.fetchedData
-            .google_conversion_pixel,
-          facebook_conversion_pixel: this.state.fetchedData
-            .facebook_conversion_pixel,
-          other_conversion_pixel: this.state.fetchedData.other_conversion_pixel,
-          page: this.state.fetchedData.page,
+          utmId: utmData._id,
+          meta_keyword: utmData.meta_keyword,
+          meta_description: utmData.meta_description,
+          meta_author: utmData.meta_author,
+          page_title: utmData.page_title,
+          google_pageview_pixel: utmData.google_pageview_pixel,
+          facebook_pageview_pixel: utmData.facebook_pageview_pixel,
+          other_pageview_pixel: utmData.other_pageview_pixel,
+          google_conversion_pixel: utmData.google_conversion_pixel,
+          facebook_conversion_pixel: utmData.facebook_conversion_pixel,
+          other_conversion_pixel: utmData.other_conversion_pixel,
         });
       })
 
@@ -413,94 +363,83 @@ class PageDetail extends Component {
   }
 
   onSave = async () => {
-    // console.log('---------------')
-    // console.log(typeof($('iframe')))
-    // console.log($('iframe')[0].contentWindow.document.documentElement)
-    // console.log('---------------')
-    // let html = $('iframe')[0].contentWindow.document.documentElement;
-    // console.log(typeof($(html)));
-    // console.log($(html));
-    // console.log($(html)[0].innerHTML);
-    // let inHtml = $(html)[0].innerHTML
-    // let phoneDiv = $(inHtml).find('.phone-open-div')
-    // let phones = $(html).find('.phone')
-    // console.log(inHtml);
-    // $('.intl-tel-input').remove();
-    // console.log($('.intl-tel-input').remove());
-    // console.log($(newHtml).find('.phone-open-div').length);
-    // let newHtml = $(inHtml).remove('.phone-open-div')
-    // $(phoneDiv).remove()
-    // console.log($(newHtml));
-    // console.log($(newHtml).find('.phone-open-div').length);
-    // console.log($(newHtml).remove());
-    // console.log($(newHtml).length);
-    // $(inHtml).find('.intl-tel-input').remove()
 
-    const flaginput = document
+    this.setState({ loadingLink: true })
+
+    let flaginput = document
       .getElementsByTagName("iframe")
       .frame.contentWindow.document.documentElement.getElementsByClassName(
         "intl-tel-input"
       );
-    for (var i = 0; i < flaginput.length; i++) {
-      await flaginput[i].parentNode.removeChild(flaginput[i]);
+
+
+    let numOfPhone = flaginput.length;
+    for (var i = 0; i < numOfPhone; i++) {
+      flaginput[0].parentNode.removeChild(flaginput[0]);
     }
 
     var phoneInput = document.createElement("input");
     phoneInput.setAttribute("type", "tel");
     phoneInput.setAttribute("class", "form-control phone");
-    let addingFlagInput = document
+
+    var phoneInput1 = document.createElement("input");
+    phoneInput1.setAttribute("type", "tel");
+    phoneInput1.setAttribute("class", "form-control phone");
+
+    var phoneInput2 = document.createElement("input");
+    phoneInput2.setAttribute("type", "tel");
+    phoneInput2.setAttribute("class", "form-control phone");
+
+    let form1 = document
       .getElementsByTagName("iframe")
       .frame.contentWindow.document.documentElement.getElementsByClassName(
-        "phone-open-div"
+        "form1"
       );
 
-  //   let j= 0;
-  //   while(j < addingFlagInput.length) {
-  //  await addingFlagInput[j].appendChild(phoneInput);
-  //     ++j;
-  //   }
-    // for (var i = 0; i < addingFlagInput.length; i++) {
+    let form2 = document
+      .getElementsByTagName("iframe")
+      .frame.contentWindow.document.documentElement.getElementsByClassName(
+        "form2"
+      );
 
-    // }
+    let form3 = document
+      .getElementsByTagName("iframe")
+      .frame.contentWindow.document.documentElement.getElementsByClassName(
+        "form3"
+      );
 
-   addingFlagInput[0].appendChild(phoneInput);
- 
+    $(form1).find(".phone-open-div").append(phoneInput)
+    if (form2) { $(form2).find(".phone-open-div").append(phoneInput1) }
+    if (form3) { $(form3).find(".phone-open-div").append(phoneInput2) }
 
-    // $("iframe").contentDocument.documentElement.getElementsByClassName("phone-open-div").append('<input type="tel" className="form-control phone" style="color: #000000;" autocomplete="off" placeholder="Mobile No. *">')
     var content = document.getElementsByTagName("iframe").frame.contentWindow
       .document.documentElement.innerHTML;
     var parser = new DOMParser();
     var htmlDoc = parser.parseFromString(content, "text/html");
-    var con1 = $(htmlDoc).find("body");
 
-    // if (htmlDoc.head.querySelector("meta[name='author']")) {
-    //   $(
-    //     htmlDoc.head
-    //       .querySelector("meta[name='author']")
-    //       .setAttribute("content", this.state.meta_author)
-    //   );
-    // }
-    // $(
-    //   htmlDoc.head
-    //     .querySelector("meta[name='description']")
-    //     .setAttribute("content", this.state.meta_description)
-    // );
-    // $(
-    //   htmlDoc.head
-    //     .querySelector("meta[name='keywords']")
-    //     .setAttribute("content", this.state.meta_keyword)
-    // );
-    // $(htmlDoc.head.getElementsByClassName("title_hidden_header")).html(
-    //   this.state.page_title
-    // );
-
-    // changeTitle = this.state.page_title;
-    const { item } = this.props.location.state;
-    var forServer = htmlDoc;
-    console.log(forServer);
+    if (htmlDoc.head.querySelector("meta[name='author']")) {
+      $(
+        htmlDoc.head
+          .querySelector("meta[name='author']")
+          .setAttribute("content", this.state.meta_author)
+      );
+    }
+    $(
+      htmlDoc.head
+        .querySelector("meta[name='description']")
+        .setAttribute("content", this.state.meta_description)
+    );
+    $(
+      htmlDoc.head
+        .querySelector("meta[name='keywords']")
+        .setAttribute("content", this.state.meta_keyword)
+    );
+    $(htmlDoc.head.getElementsByClassName("title_hidden_header")).html(
+      this.state.page_title
+    );
 
     var encoded = btoa(unescape(encodeURIComponent(content)));
-    console.log(encoded);
+
     this.onSubmitForm();
 
     // console.log(changeTitle);
@@ -509,16 +448,13 @@ class PageDetail extends Component {
       html: encoded,
       user_id: localStorage.getItem("userId"),
       page_id: this.state.pageId,
-    });
-
+    })
+    this.fetchPage()
     this.setState({
       isSaved: true,
+      loadingLink: false,
     });
   };
-
-  onDownload() {
-    alert("DOWNLOADED");
-  }
 
   // FILE UPLOAD FUNCTION
   fileReader = null;
@@ -577,14 +513,14 @@ class PageDetail extends Component {
       });
     console.log(
       "FRAME BODY" +
-        document.getElementById("frame").contentWindow.document.body.innerHTML
+      document.getElementById("frame").contentWindow.document.body.innerHTML
     );
 
     console.log(
       "CHAGED SRC" +
-        this.state.clicked +
-        "IAMGE URL" +
-        this.state.imagePreviewUrl
+      this.state.clicked +
+      "IAMGE URL" +
+      this.state.imagePreviewUrl
     );
     reader.readAsDataURL(file);
   }
@@ -610,11 +546,12 @@ class PageDetail extends Component {
       google_conversion_pixel,
       facebook_conversion_pixel,
       other_conversion_pixel,
-      pageId,
+      pageId
     } = this.state;
 
+    let utmApi = this.state.utmId ? "http://magicpages.propstory.com/utm/update" : "http://magicpages.propstory.com/utm";
     axios
-      .post("http://magicpages.propstory.com/utm/update", {
+      .post(utmApi, {
         meta_keyword,
         meta_description,
         page_title,
@@ -626,10 +563,9 @@ class PageDetail extends Component {
         google_conversion_pixel,
         facebook_conversion_pixel,
         other_conversion_pixel,
-        page_id: pageId,
+        page: pageId,
       })
       .then((result) => {
-        console.log("AFTER SUBMITTING");
         console.log(result);
       });
   };
@@ -652,6 +588,8 @@ class PageDetail extends Component {
     });
   };
 
+
+
   render() {
     // console.log("USER", this.props.userInfo);
     // console.log("name", name);
@@ -662,6 +600,9 @@ class PageDetail extends Component {
     const labelColor = {
       color: "white",
     };
+
+    const open = Boolean(this.state.anchorEl);
+    const id = open ? 'link-popover' : undefined;
 
     // UPLOAD AND CHANGE IMAGE FUNCTION
     let { imagePreviewUrl } = this.state;
@@ -706,303 +647,355 @@ class PageDetail extends Component {
 
     // }
     // else  {<UploadTemplateModal />}
-
     return (
-      <div className="content" style={{ padding: 20 }}>
-        <Grid container alignItems="center" justify="space-between">
-          <Grid item sm={6} md={6}>
-            <h3
-              style={{
-                fontWeight: "Bold",
-                fontFamily: "Montserrat",
-                color: "#000",
-                marginBottom: 0,
-              }}
-            >
-              {this.state.pageName}
-            </h3>
-          </Grid>
-          <Grid container justify="flex-end">
-            {/* CHANGE DESKTOP AND MOBILE VIEW BUTTON */}
-            <button
-              type="submit"
-              className="btn"
-              onClick={this.onSave}
-              style={{ margin: 5, backgroundColor: "#654062" }}
-            >
-              Save
+      <>
+        <Backdrop open={this.state.loadingLink} style={{ zIndex: 9 }} >
+          <CircularProgress style={{ color: "#fff" }} />
+          <h3 style={{ marginBottom: 0, color: "#fff", marginLeft: 10 }}>Saving your page.</h3>
+        </Backdrop>
+
+        <div className="content mb-5" style={{ padding: 20 }}>
+          <Grid container alignItems="center" justify="space-between">
+            <Grid item sm={3} md={3}>
+              <h3
+                style={{
+                  fontWeight: "light",
+                  fontFamily: "Montserrat",
+                  color: "#000",
+                  marginBottom: 0,
+                }}
+              >
+                {this.state.pageName}
+              </h3>
+            </Grid>
+
+            <Grid container justify="flex-end">
+              {/* CHANGE DESKTOP AND MOBILE VIEW BUTTON */}
+              <Tooltip title="Create Link" aria-label="create-link">
+
+                <ToggleButton
+                  aria-describedby={id}
+                  onClick={this.handleClick}
+                  style={{
+                    backgroundColor: "#dfdfdf",
+                    outline: "none",
+                    border: "none",
+                    margin: 5,
+                  }}
+                  value="Create Link"
+                >
+                  <LinkIcon color="action" />
+                </ToggleButton>
+              </Tooltip>
+              <Popover
+                id={id}
+                open={open}
+                anchorEl={this.state.anchorEl}
+                onClose={this.handleClosePopover}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'center',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'center',
+                }}
+              >
+                {this.state.loadingLink ?
+                  <div className="d-flex align-items-center m-3">
+                    <p style={{ marginBottom: 0, fontWeight: "bold", fontSize: 12 }}>Creating Link. 🕖</p>
+                  </div> :
+                  <div style={{ padding: 10 }}>
+                    {this.state.pageLinks && <div>
+                      <div className="d-flex align-items-center justify-content-between mb-2 links">
+                        <img src={google} width="16" />
+                        <h5>{"https://propstory.com/" + this.state.pageLinks.google}</h5>
+                        <a onClick={() => { navigator.clipboard.writeText("https://propstory.com/" + this.state.pageLinks.google) }}>
+                          <FileCopyIcon fontSize="small" />
+                        </a>
+                      </div>
+                      <div className="d-flex align-items-center justify-content-between mb-2 links">
+                        <img src={facebook} width="16" />
+                        <h5>{"https://propstory.com/" + this.state.pageLinks.taboola}</h5>
+                        <a onClick={() => { navigator.clipboard.writeText("https://propstory.com/" + this.state.pageLinks.taboola) }}>
+                          <FileCopyIcon fontSize="small" />
+                        </a>
+                      </div>
+                      <div className="d-flex align-items-center justify-content-between mb-2 links">
+                        <img src={taboola} width="16" />
+                        <h5>{"https://propstory.com/" + this.state.pageLinks.fb}</h5>
+                        <a onClick={() => { navigator.clipboard.writeText("https://propstory.com/" + this.state.pageLinks.fb) }}>
+                          <FileCopyIcon fontSize="small" />
+                        </a>
+                      </div>
+                    </div>}
+                    {this.state.pageLinks == undefined ? <button onClick={this.createLink}
+                      style={{ padding: "5px 10px", backgroundColor: "#654062", fontWeight: "500" }}>Create Links</button> :
+
+                      <button onClick={this.createLink}
+                        style={{ padding: "5px 10px", backgroundColor: "#654062", fontWeight: "500" }}> Update Links</button>}
+
+                  </div>}
+              </Popover>
+              <ToggleButtonGroup value={this.state.format} aria-label="device">
+                <Tooltip title="Desktop View" aria-label="desktop">
+                  <ToggleButton
+                    value="laptop"
+                    aria-label="laptop"
+                    onClick={this.onClickDesktop}
+                    style={{
+                      backgroundColor: "#dfdfdf",
+                      outline: "none",
+                      border: "none",
+                      margin: 5,
+                    }}
+                  >
+                    <LaptopIcon color={this.state.btnClassD} />
+                  </ToggleButton>
+                </Tooltip>
+                <Tooltip title="Mobile View" aria-label="mobile">
+                  <ToggleButton
+                    value="phone"
+                    aria-label="phone"
+                    onClick={this.onClickMobile}
+                    style={{
+                      backgroundColor: "#dfdfdf",
+                      outline: "none",
+                      border: "none",
+                      margin: 5,
+                    }}
+                  >
+                    <PhoneAndroidIcon color={this.state.btnClassM} />
+                  </ToggleButton>
+                </Tooltip>
+              </ToggleButtonGroup>
+              <button
+                type="submit"
+                className="btn"
+                onClick={this.onSave}
+                style={{ margin: 5, backgroundColor: "#654062", fontWeight: "normal" }}
+              >
+                Save Page
             </button>
-            <ToggleButtonGroup value={this.state.format} aria-label="device">
-              <ToggleButton
-                value="laptop"
-                aria-label="laptop"
-                onClick={this.onClickDesktop}
-                style={{
-                  backgroundColor: "#dfdfdf",
-                  outline: "none",
-                  border: "none",
-                  margin: 5,
-                }}
-              >
-                <LaptopIcon color={this.state.btnClassD} />
-              </ToggleButton>
-
-              <ToggleButton
-                value="phone"
-                aria-label="phone"
-                onClick={this.onClickMobile}
-                style={{
-                  backgroundColor: "#dfdfdf",
-                  outline: "none",
-                  border: "none",
-                  margin: 5,
-                }}
-              >
-                <PhoneAndroidIcon color={this.state.btnClassM} />
-              </ToggleButton>
-            </ToggleButtonGroup>
+            </Grid>
           </Grid>
-        </Grid>
 
-        <Grid container justify="space-between">
-          <Grid item xs={10}>
-            {/* <Frame
-            style={{
-              position: "relative",
-              left: "50%",
-              top: window.innerWidth < 1217 ? "45%" : "50%",
-              transform: "translate(-50%, -50%)",
-              borderRadius: 12,
-            }}
-            styleSheets={['https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css']}
-            width={this.state.frameWidth}
-            height="1050"
-            id="frame"
-            className="frame"
-          >
-            {reactElement}
-          </Frame> */}
-            <iframe
-              style={{
-                position: "relative",
-                left: "50%",
-                top: window.innerWidth < 1217 ? "45%" : "50%",
-                transform: "translate(-50%, -50%)",
-                borderRadius: 12,
-              }}
-              width={this.state.frameWidth}
-              height="100%"
-              id="frame"
-              srcDoc={this.state.code}
-            />
-          </Grid>
-          {/* IFRAME ENDS HERE */}
+          <Grid container justify="space-between">
+            <Grid item xs={10}>
 
-          {/* FORM FOR UTM DETAILS */}
-          <Grid item xs={2}>
-            <div className="card ml-3 mt-4 p-3" style={{ borderRadius: 12 }}>
-              <div className="card-block">
-                <div className="previewComponent">{imagePreview}</div>
+              <iframe
+                style={{
+                  position: "relative",
+                  left: "50%",
+                  top: window.innerWidth < 1217 ? "45%" : "50%",
+                  transform: "translate(-50%, -50%)",
+                  borderRadius: 12,
+                }}
+                className="mt-4"
+                width={this.state.frameWidth}
+                height="100%"
+                id="frame"
+                srcDoc={this.state.code}
+              />
+            </Grid>
+            {/* IFRAME ENDS HERE */}
 
-                <form encType="multipart/form-data">
-                  <label style={labelColor} className="btn">
-                    <input
-                      name="image_file"
-                      id="image_file"
-                      style={uploadButton}
-                      className="fileInput"
-                      type="file"
-                      accept="image"
-                      onChange={(e) => this._handleImageChange(e)}
-                    />
+            {/* FORM FOR UTM DETAILS */}
+            <Grid item xs={2}>
+              <div className="card ml-3 mt-4 p-3" style={{ borderRadius: 12 }}>
+                <div className="card-block">
+                  <div className="previewComponent">{imagePreview}</div>
+
+                  <form encType="multipart/form-data">
+                    <label style={labelColor} className="btn">
+                      <input
+                        name="image_file"
+                        id="image_file"
+                        style={uploadButton}
+                        className="fileInput"
+                        type="file"
+                        accept="image"
+                        onChange={(e) => this._handleImageChange(e)}
+                      />
                     Choose & Upload
                   </label>
-                </form>
+                  </form>
+                </div>
               </div>
-            </div>
-            <div className="card p-3 ml-3" style={{ borderRadius: 12 }}>
-              <div className="card-block">
-                <form className="form" onSubmit={this.onSubmitForm}>
-                  <fieldset>
-                    <legend>PAGE DETAILS</legend>
+              <div className="card p-3 ml-3" style={{ borderRadius: 12 }}>
+                <div className="card-block">
+                  <form className="form" onSubmit={this.onSubmitForm}>
+                    <fieldset>
+                      <legend>PAGE DETAILS</legend>
 
-                    <label className="k-form-field">
-                      <span>Meta Keyword</span>
-                    </label>
+                      <label className="k-form-field">
+                        <span>Meta Keyword</span>
+                      </label>
+                      <br />
+                      <input
+                        onChange={this.onChangeForm}
+                        name="meta_keyword"
+                        value={this.state.meta_keyword}
+                        className="k-textbox"
+                        placeholder="Meta Keyword"
+                      />
+                      <br />
+                      <label className="k-form-field">
+                        <span>Meta Description</span>
+                      </label>
+                      <br />
+                      <input
+                        onChange={this.onChangeForm}
+                        name="meta_description"
+                        value={this.state.meta_description}
+                        className="k-textbox"
+                        placeholder="Meta Description"
+                      />
+                      <br />
+                      <label className="k-form-field">
+                        <span>Page Title</span>
+                      </label>
+                      <br />
+                      <input
+                        onChange={this.onChangeForm}
+                        name="page_title"
+                        value={this.state.page_title}
+                        className="k-textbox"
+                        placeholder="Page Title"
+                      />
+                      <br />
+                      <label className="k-form-field">
+                        <span>Meta Author</span>
+                      </label>
+                      <br />
+                      <input
+                        onChange={this.onChangeForm}
+                        name="meta_author"
+                        value={this.state.meta_author}
+                        className="k-textbox"
+                        placeholder="Meta Author"
+                      />
+                      <br />
+                      <label className="k-form-field">
+                        <span>Favicon Icon </span>
+                      </label>
+                      <br />
+                      <input
+                        onChange={this.onChangeForm}
+                        name="favicon_icon"
+                        value={this.state.favicon_icon}
+                        className="k-textbox"
+                        placeholder="Favicon Icon"
+                      />
+                      <br />
+                      <label className="k-form-field">
+                        <span>Google Pageview Pixel</span>
+                      </label>
+                      <br />
+                      <input
+                        onChange={this.onChangeForm}
+                        name="google_pageview_pixel"
+                        value={this.state.google_pageview_pixel}
+                        className="k-textbox"
+                        placeholder="Google Pageview Pixel"
+                      />
+                      <br />
+                      <label className="k-form-field">
+                        <span>Facebook Pageview Pixel</span>
+                      </label>
+                      <br />
+                      <input
+                        onChange={this.onChangeForm}
+                        name="facebook_pageview_pixel"
+                        value={this.state.facebook_pageview_pixel}
+                        className="k-textbox"
+                        placeholder="Facebook Pageview Pixel"
+                      />
+                      <br />
+                      <label className="k-form-field">
+                        <span>Other Pageview Pixel</span>
+                      </label>
+                      <br />
+                      <input
+                        onChange={this.onChangeForm}
+                        name="other_pageview_pixel"
+                        value={this.state.other_pageview_pixel}
+                        className="k-textbox"
+                        placeholder="Other Pageview Pixel"
+                      />
+                      <br />
+                      <label className="k-form-field">
+                        <span>Google Conversion Pixel</span>
+                      </label>
+                      <br />
+                      <input
+                        onChange={this.onChangeForm}
+                        name="google_conversion_pixel"
+                        value={this.state.google_conversion_pixel}
+                        className="k-textbox"
+                        placeholder="Google Conversion Pixel"
+                      />
+                      <br />
+                      <label className="k-form-field">
+                        <span>Facebook Conversion Pixel</span>
+                      </label>
+                      <br />
+                      <input
+                        onChange={this.onChangeForm}
+                        name="facebook_conversion_pixel"
+                        value={this.state.facebook_conversion_pixel}
+                        className="k-textbox"
+                        placeholder="Facebook Conversion Pixel"
+                      />
+                      <br />
+                      <label className="k-form-field">
+                        <span>Other Conversion Pixel</span>
+                      </label>
+                      <br />
+                      <input
+                        onChange={this.onChangeForm}
+                        name="other_conversion_pixel"
+                        value={this.state.other_conversion_pixel}
+                        className="k-textbox"
+                        placeholder="Other Conversion Pixel"
+                      />
+                      <br />
+                      <label className="k-form-field">
+                        <span>Page</span>
+                      </label>
+                      <br />
+                      <input
+                        onChange={this.onChangeForm}
+                        name="pageName"
+                        value={this.state.pageName}
+                        className="k-textbox"
+                        placeholder="Page Name"
+                      />
+                    </fieldset>
                     <br />
-                    <input
-                      onChange={this.onChangeForm}
-                      name="meta_keyword"
-                      value={this.state.meta_keyword}
-                      className="k-textbox"
-                      placeholder="Meta Keyword"
-                    />
-                    <br />
-                    <label className="k-form-field">
-                      <span>Meta Description</span>
-                    </label>
-                    <br />
-                    <input
-                      onChange={this.onChangeForm}
-                      name="meta_description"
-                      value={this.state.meta_description}
-                      className="k-textbox"
-                      placeholder="Meta Description"
-                    />
-                    <br />
-                    <label className="k-form-field">
-                      <span>Page Title</span>
-                    </label>
-                    <br />
-                    <input
-                      onChange={this.onChangeForm}
-                      name="page_title"
-                      value={this.state.page_title}
-                      className="k-textbox"
-                      placeholder="Page Title"
-                    />
-                    <br />
-                    <label className="k-form-field">
-                      <span>Meta Author</span>
-                    </label>
-                    <br />
-                    <input
-                      onChange={this.onChangeForm}
-                      name="meta_author"
-                      value={this.state.meta_author}
-                      className="k-textbox"
-                      placeholder="Meta Author"
-                    />
-                    <br />
-                    <label className="k-form-field">
-                      <span>Favicon Icon </span>
-                    </label>
-                    <br />
-                    <input
-                      onChange={this.onChangeForm}
-                      name="favicon_icon"
-                      value={this.state.favicon_icon}
-                      className="k-textbox"
-                      placeholder="Favicon Icon"
-                    />
-                    <br />
-                    <label className="k-form-field">
-                      <span>Google Pageview Pixel</span>
-                    </label>
-                    <br />
-                    <input
-                      onChange={this.onChangeForm}
-                      name="google_pageview_pixel"
-                      value={this.state.google_pageview_pixel}
-                      className="k-textbox"
-                      placeholder="Google Pageview Pixel"
-                    />
-                    <br />
-                    <label className="k-form-field">
-                      <span>Facebook Pageview Pixel</span>
-                    </label>
-                    <br />
-                    <input
-                      onChange={this.onChangeForm}
-                      name="facebook_pageview_pixel"
-                      value={this.state.facebook_pageview_pixel}
-                      className="k-textbox"
-                      placeholder="Facebook Pageview Pixel"
-                    />
-                    <br />
-                    <label className="k-form-field">
-                      <span>Other Pageview Pixel</span>
-                    </label>
-                    <br />
-                    <input
-                      onChange={this.onChangeForm}
-                      name="other_pageview_pixel"
-                      value={this.state.other_pageview_pixel}
-                      className="k-textbox"
-                      placeholder="Other Pageview Pixel"
-                    />
-                    <br />
-                    <label className="k-form-field">
-                      <span>Google Conversion Pixel</span>
-                    </label>
-                    <br />
-                    <input
-                      onChange={this.onChangeForm}
-                      name="google_conversion_pixel"
-                      value={this.state.google_conversion_pixel}
-                      className="k-textbox"
-                      placeholder="Google Conversion Pixel"
-                    />
-                    <br />
-                    <label className="k-form-field">
-                      <span>Facebook Conversion Pixel</span>
-                    </label>
-                    <br />
-                    <input
-                      onChange={this.onChangeForm}
-                      name="facebook_conversion_pixel"
-                      value={this.state.facebook_conversion_pixel}
-                      className="k-textbox"
-                      placeholder="Facebook Conversion Pixel"
-                    />
-                    <br />
-                    <label className="k-form-field">
-                      <span>Other Conversion Pixel</span>
-                    </label>
-                    <br />
-                    <input
-                      onChange={this.onChangeForm}
-                      name="other_conversion_pixel"
-                      value={this.state.other_conversion_pixel}
-                      className="k-textbox"
-                      placeholder="Other Conversion Pixel"
-                    />
-                    <br />
-                    <label className="k-form-field">
-                      <span>Page</span>
-                    </label>
-                    <br />
-                    <input
-                      onChange={this.onChangeForm}
-                      name="page"
-                      value={this.state.page}
-                      className="k-textbox"
-                      placeholder="Page"
-                    />
-                  </fieldset>
-                  <br />
-                </form>
+                  </form>
+                </div>
               </div>
-            </div>
+            </Grid>
           </Grid>
-        </Grid>
-        {/* FORM EDS HERE */}
-        {/* CHANGE IFRAME IMAGES OR ITS SIZE */}
+          {/* FORM EDS HERE */}
+          {/* CHANGE IFRAME IMAGES OR ITS SIZE */}
 
-        <Row className="col-12 d-flex justify-content-around">
-          <button
-            type="submit"
-            className="btn btn-primary col-2"
-            onClick={this.onSave}
-          >
-            Save{" "}
-          </button>
-          {this.state.isSaved && (
-            <button
-              type="submit"
-              className="btn btn-info"
-              onClick={this.onDownload}
-            >
-              <i className="fas fa-arrow-alt-circle-down fa-2x" />
-            </button>
-          )}
-        </Row>
-        <div style={{ display: "none" }} id="utm">
+
+          {/* <div style={{ display: "none" }} id="utm">
           {Object.entries(this.state.fetchedData).map(function ([key, value]) {
             return <div> {`${key}=\"${value}\"`}</div>;
           })}
+        </div> */}
+          <Snackbar open={this.state.isSaved} autoHideDuration={1000} onClose={this.handleClose}>
+            <Alert onClose={this.handleClose} severity="success">
+              Your Page is saved successfully.👌
+        </Alert>
+          </Snackbar>
+        
         </div>
-      </div>
+      </>
+
     );
   }
 }

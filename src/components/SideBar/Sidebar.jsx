@@ -82,6 +82,7 @@ export default function Sidebar(props) {
                   className="nav-link d-flex" 
                   activeClassName="active"
                   style={{alignItems: "center"}}
+                  onClick={toggleDrawer("left", false)}
                 >
                  <ListItem button key={props.name}>
             <ListItemIcon>
@@ -100,8 +101,8 @@ export default function Sidebar(props) {
   );
 
   return (
-    <div>
-      <React.Fragment key="left">
+    <div >
+      <React.Fragment key="left" style={{position: "fixed"}}>
  
         <Navbar bg="light" expand="xl">
           <Navbar.Brand>
